@@ -1,0 +1,42 @@
+# ============================================================
+# 中北大学智能问答助手 - Python 依赖
+# 使用：pip install -r requirements.txt
+# ============================================================
+
+# ---------- Web 框架 ----------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# ---------- LLM / RAG 核心 ----------
+langchain==0.3.14
+langchain-community==0.3.14
+langchain-core==0.3.29
+langchain-text-splitters==0.3.4
+
+# 智谱 / OpenAI / 通义 SDK
+zhipuai==2.1.8
+openai==1.59.7
+dashscope==1.22.0
+
+# ---------- 向量数据库 ----------
+chromadb==0.5.23
+
+# ---------- 文档处理 ----------
+pypdf==5.1.0
+pdfplumber==0.11.4
+python-docx==1.1.2
+beautifulsoup4==4.12.3
+markdown==3.7
+
+# ---------- 配置与工具 ----------
+python-dotenv==1.0.1
+pydantic==2.10.4
+pydantic-settings==2.7.0
+httpx==0.28.1
+
+# ---------- 开发依赖（可选，单独装） ----------
+# pytest==8.3.4
+# ruff==0.8.4
+# mypy==1.14.1
+# pre-commit==4.0.1

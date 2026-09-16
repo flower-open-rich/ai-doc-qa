@@ -1,0 +1,23 @@
+# Pre-commit hooks: git commit 时自动检查代码质量
+# 安装：pip install pre-commit && pre-commit install
+# 之后每次 commit 会自动运行这些检查
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace   # 删除行尾空格
+      - id: end-of-file-fixer     # 文件末尾加空行
+      - id: check-yaml            # YAML 语法检查
+      - id: check-toml            # TOML 语法检查
+      - id: check-added-large-files
+        args: ['--maxkb=500']     # 防止提交大于 500KB 的文件
+      - id: check-merge-conflict
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']  # 禁止直接提交到 main
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: ['--fix']          # 自动修复可修的问题
+      - id: ruff-format          # 代码格式化

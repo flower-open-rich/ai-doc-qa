@@ -1,0 +1,20 @@
+# docker-compose: 一键启动整个项目（包含 app）
+# 使用：docker-compose up -d
+services:
+  app:
+    build: .
+    container_name: nuc-qa-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # 挂载本地 data，方便更新知识库文档
+      - ./data:/app/data
+      - ./vector_db:/app/vector_db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -1,0 +1,48 @@
+# ============================================================
+# pyproject.toml: 现代 Python 项目配置中心
+# 配置 ruff（格式+lint）、mypy（类型检查）、pytest
+# ============================================================
+[project]
+name = "nuc-qa"
+version = "0.1.0"
+description = "中北大学智能问答助手 - 基于 RAG 的校园知识库问答系统"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+# ---------- Ruff：现代代码格式化 + lint 工具（替代 black + flake8） ----------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle 错误
+    "W",   # pycodestyle 警告
+    "F",   # pyflakes
+    "I",   # isort（import 排序）
+    "B",   # bugbear（常见 bug 检测）
+    "UP",  # pyupgrade（升级语法）
+    "N",   # 命名规范
+]
+ignore = [
+    "E501",  # 行长 100 内由 formatter 处理
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ---------- Mypy：静态类型检查 ----------
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # 学习阶段先关，后期再开
+ignore_missing_imports = true
+
+# ---------- Pytest ----------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
