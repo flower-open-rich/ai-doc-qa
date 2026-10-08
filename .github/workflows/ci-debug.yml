@@ -1,0 +1,52 @@
+# 临时诊断工作流：把 pytest 的失败输出转成 GitHub annotation，
+# 这样就能通过 API 读到具体报错（Actions 原始日志需要更高权限的 token）。
+# 排查完即删除。
+name: CI Debug
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest pytest-asyncio pytest-cov
+          pip install -r requirements.txt
+        continue-on-error: true
+
+      - name: 🔎 打印依赖版本
+        run: |
+          echo "::notice title=Python::$(python -V 2>&1)"
+          pip list 2>/dev/null | grep -Ei "^(pytest|pytest-asyncio|pytest-cov|langchain-core|langchain-community|langchain-openai|langchain-huggingface|sentence-transformers|torch|transformers|tokenizers|chromadb|pydantic|fastapi) " | while read -r line; do
+            echo "::notice title=PKG::$line"
+          done
+
+      - name: 🧪 跑测试并暴露错误
+        run: |
+          set +e
+          python -m pytest tests/ -v --tb=long > /tmp/pytest.log 2>&1
+          RC=$?
+          echo "pytest 退出码: $RC"
+          echo "::error title=pytest-exit-code::$RC"
+          tail -n 120 /tmp/pytest.log
+          if [ $RC -ne 0 ]; then
+            # 把失败摘要逐行转成 annotation，便于通过 API 读取
+            grep -nE "^(FAILED|ERROR|E  |_____|=====)" /tmp/pytest.log | tail -n 60 | while IFS= read -r line; do
+              safe=$(echo "$line" | tr -d '\r' | head -c 400)
+              echo "::error title=PYTEST::$safe"
+            done
+          fi
+          exit 0

@@ -2,7 +2,7 @@
 
 > 基于 RAG（检索增强生成）的校园知识库问答系统，让 AI 真正"懂"中北大学。
 
-[![CI](https://github.com/your-name/NUC_QA/actions/workflows/ci.yml/badge.svg)](https://github.com/your-name/NUC_QA/actions/workflows/ci.yml)
+[![CI](https://github.com/flower-open-rich/ai-doc-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/flower-open-rich/ai-doc-qa/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
