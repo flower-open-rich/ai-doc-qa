@@ -30,6 +30,7 @@ wheels/
 
 # ========== 测试与覆盖率 ==========
 .pytest_cache/
+.pytest_tmp/
 .coverage
 .coverage.*
 htmlcov/
@@ -57,11 +58,17 @@ ENV/
 *~
 .DS_Store
 
-# ========== 项目数据（按需保留） ==========
-vector_db/*.sqlite3
-vector_db/chroma/
-data/raw/
+# ========== 项目数据 ==========
+# 向量库是本地生成的构建产物，体积大且可由 make ingest 重建，不提交。
+# 注意 chroma_persist_dir 默认是 data/chroma（早期规则错写成 vector_db/，对不上）
+data/chroma/
 data/processed/
+data/raw/
+vector_db/
+
+# 用户上传的资料由接口写入，只有 data/raw_docs 下的示例文档需要提交
+data/raw_docs/*.docx
+data/raw_docs/*.pdf
 
 # ========== 日志 ==========
 *.log

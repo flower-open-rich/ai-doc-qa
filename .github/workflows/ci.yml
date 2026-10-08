@@ -1,12 +1,11 @@
-# GitHub Actions CI: 每次 push / PR 自动跑测试 + 代码检查
-# 这是"工程化"的强加分项，面试官一看就知道你懂 CI
+# GitHub Actions CI: 每次 push / PR 自动跑 lint + 类型检查 + 测试
 name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, master, develop]
 
 jobs:
   lint-and-test:
@@ -24,16 +23,23 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # 只装测试/lint 需要的部分，不装 torch（省 CI 时间和体积）。
+          # 测试全部用 stub 替身，不会真的加载 Embedding 模型。
+          pip install ruff mypy pytest pytest-asyncio pytest-cov
+          pip install -r requirements.txt
 
-      - name: ✨ Run Ruff (lint + format check)
-        run: ruff check . && ruff format --check .
+      - name: ✨ Ruff (lint)
+        run: ruff check .
 
-      - name: 🔍 Run Mypy (type check)
-        run: mypy app/ || true  # 学习阶段先允许失败
+      - name: 🎨 Ruff (format check)
+        run: ruff format --check .
+
+      - name: 🔍 Mypy (type check)
+        # 之前这里写了 `|| true`，等于类型检查永远不报错、CI 永远是绿的，
+        # 那就失去了 CI 的意义。现在改成真的会失败。
+        # app/ 现有代码全部通过，新增代码请自行修好类型问题。
+        run: mypy app/
 
       - name: 🧪 Run tests
-        env:
-          ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
-        run: pytest tests/ -v || true  # 没测试用例时也允许通过
+        # 测试用 stub 替身，不需要真实 API Key / 余额，所以在 CI 里能真跑。
+        run: pytest tests/ -v --cov=app --cov-report=term-missing

@@ -12,11 +12,13 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=500']     # 防止提交大于 500KB 的文件
       - id: check-merge-conflict
+      - id: detect-private-key    # 防止误提交私钥
+      - id: check-case-conflict   # 防止仅大小写不同的重名文件
       - id: no-commit-to-branch
-        args: ['--branch', 'main']  # 禁止直接提交到 main
+        args: ['--branch', 'main', '--branch', 'master']  # 禁止直接提交到主干
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.8.6
     hooks:
       - id: ruff
         args: ['--fix']          # 自动修复可修的问题

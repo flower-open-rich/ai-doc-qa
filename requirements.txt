@@ -14,10 +14,18 @@ langchain-community==0.3.14
 langchain-core==0.3.29
 langchain-text-splitters==0.3.4
 
-# 智谱 / OpenAI / 通义 SDK
-zhipuai==2.1.8
+# ---------- 本地 Embedding（默认方案：免费、离线） ----------
+# 注意：sentence-transformers 会拉入 torch，安装体积较大（Windows 约 2GB，
+# 因为默认带 CUDA 版依赖）。如果只想用云端 Embedding（EMBEDDING_PROVIDER=zhipu），
+# 可以把这两行去掉，镜像会小很多。
+sentence-transformers>=2.7,<4
+langchain-huggingface>=0.1,<0.4
+
+# ---------- 云端模型 SDK ----------
+zhipuai==2.1.5.20250825
 openai==1.59.7
-dashscope==1.22.0
+# 与 langchain-core 0.3.x 兼容的版本区间
+langchain-openai>=0.2,<0.4
 
 # ---------- 向量数据库 ----------
 chromadb==0.5.23
@@ -26,6 +34,7 @@ chromadb==0.5.23
 pypdf==5.1.0
 pdfplumber==0.11.4
 python-docx==1.1.2
+docx2txt>=0.8
 beautifulsoup4==4.12.3
 markdown==3.7
 
@@ -34,9 +43,3 @@ python-dotenv==1.0.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
 httpx==0.28.1
-
-# ---------- 开发依赖（可选，单独装） ----------
-# pytest==8.3.4
-# ruff==0.8.4
-# mypy==1.14.1
-# pre-commit==4.0.1

@@ -9,6 +9,30 @@ description = "中北大学智能问答助手 - 基于 RAG 的校园知识库问
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "langchain>=0.3,<0.4",
+    "langchain-community>=0.3,<0.4",
+    "langchain-core>=0.3,<0.4",
+    "chromadb>=0.5,<0.6",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+]
+
+[project.optional-dependencies]
+local-embedding = [
+    "sentence-transformers>=2.7,<4",
+    "langchain-huggingface>=0.1,<0.4",
+]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "mypy>=1.14",
+    "pre-commit>=4.0",
+]
 
 # ---------- Ruff：现代代码格式化 + lint 工具（替代 black + flake8） ----------
 [tool.ruff]
@@ -27,6 +51,9 @@ select = [
 ]
 ignore = [
     "E501",  # 行长 100 内由 formatter 处理
+    # FastAPI 的依赖注入就是把 File()/Query()/Depends() 写在参数默认值里的，
+    # 这是官方要求的写法，不是 bug。所以关掉这条规则。
+    "B008",
 ]
 
 [tool.ruff.format]
@@ -46,3 +73,24 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 asyncio_mode = "auto"
+# pytest-asyncio 0.24+ 要求显式声明 fixture 的事件循环作用域，
+# 不写会有一堆 deprecation warning 淹没测试输出
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    # 第三方库（langchain_community / chromadb）内部会抛一些过时告警，
+    # 不是本项目代码的问题，别让它们淹没测试输出
+    "ignore::DeprecationWarning:langchain_community.*",
+    "ignore::DeprecationWarning:chromadb.*",
+]
+
+# ---------- 覆盖率 ----------
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/static/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

@@ -1,5 +1,5 @@
-# docker-compose: 一键启动整个项目（包含 app）
-# 使用：docker-compose up -d
+# docker-compose: 一键启动整个项目
+# 使用：docker compose up -d
 services:
   app:
     build: .
@@ -9,12 +9,19 @@ services:
     env_file:
       - .env
     volumes:
-      # 挂载本地 data，方便更新知识库文档
+      # 挂载本地 data：既方便往 raw_docs 里丢新资料，
+      # 也能让 data/chroma 里的向量库在容器重建后保留下来
+      # （chroma_persist_dir 默认就是 <项目根>/data/chroma）
       - ./data:/app/data
-      - ./vector_db:/app/vector_db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      # 与 Dockerfile 里的 HEALTHCHECK 保持一致：不用 curl
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"
       interval: 30s
       timeout: 10s
+      start_period: 30s
       retries: 3
