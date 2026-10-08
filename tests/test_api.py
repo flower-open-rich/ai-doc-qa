@@ -238,21 +238,41 @@ def test_upload_rejects_path_traversal(client, tmp_path):
 
     安全回归测试：客户端可控的 filename 若直接拼进保存路径，
     构造 ../../xxx 就能覆盖项目里的任意文件。
+
+    这个测试必须与平台无关。踩过的坑：最初用 Path(filename).name 清洗，
+    在 Windows 上反斜杠会被正确剥离，但同样的代码在 Linux（CI 环境）上
+    反斜杠不是分隔符，`..\\..\\windows\\a.txt` 会原样透传，
+    于是 Windows 风格的攻击在 Linux 部署时完全失效。
+    下面同时覆盖正/反斜杠两种写法，保证两个平台都安全。
     """
     from fastapi import HTTPException
 
     from app.api.routes_documents import _safe_filename
 
+    # 正斜杠（POSIX 风格）
     assert _safe_filename("../../etc/passwd") == "passwd"
-    assert _safe_filename("..\\..\\windows\\system32\\a.txt") == "a.txt"
     assert _safe_filename("/absolute/path/file.md") == "file.md"
 
+    # 反斜杠（Windows 风格）—— 必须在 Linux 上也被正确剥离
+    assert _safe_filename("..\\..\\windows\\system32\\a.txt") == "a.txt"
+    assert _safe_filename("C:\\Users\\evil\\payload.md") == "payload.md"
+
+    # 混合分隔符
+    assert _safe_filename("../../mixed\\path/file.md") == "file.md"
+
+    # 纯文件名保持不变
+    assert _safe_filename("notes.md") == "notes.md"
+    assert _safe_filename("中北大学简介.md") == "中北大学简介.md"
+
+    # 非法输入
     with pytest.raises(HTTPException):
         _safe_filename("..")
     with pytest.raises(HTTPException):
         _safe_filename(None)
     with pytest.raises(HTTPException):
         _safe_filename("")
+    with pytest.raises(HTTPException):
+        _safe_filename("../../")
 
 
 def test_upload_rejects_empty_file(client):

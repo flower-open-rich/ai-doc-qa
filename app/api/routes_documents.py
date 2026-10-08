@@ -1,6 +1,6 @@
 """文档管理路由：上传文件 → 自动切片入库。"""
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -27,13 +27,25 @@ def _safe_filename(filename: str | None) -> str:
     从上传的 filename 里取出安全的文件名。
 
     为什么必须做这一步？
-    上传的 filename 完全由客户端控制，可能长这样：../../app/main.py
+    上传的 filename 完全由客户端控制，可能长这样：
+        ../../app/main.py            （正斜杠）
+        ..\\..\\windows\\system32\\a.txt  （反斜杠）
     如果直接拼进保存路径，就能覆盖项目里的任意文件（路径穿越漏洞）。
-    这里用 Path(...).name 只保留最后一段，把目录部分全部丢掉。
+
+    为什么不能只用 Path(filename).name？
+    因为 Path 的行为跟随运行平台：在 Linux 上反斜杠不是路径分隔符，
+    `Path("..\\\\..\\\\windows\\\\a.txt").name` 会原样返回整串，
+    于是 Windows 风格的穿越攻击在 Linux 部署时就漏过去了
+    （本项目在 Ubuntu 上跑 CI 时被测试抓到过这个问题）。
+    所以这里先把两种分隔符都归一化，再取最后一段。
     """
     if not filename:
         raise HTTPException(status_code=400, detail="缺少文件名")
-    name = Path(filename).name.strip()
+
+    # 关键：无论部署在什么平台，攻击者都可能用任意一种分隔符
+    normalized = filename.replace("\\", "/")
+    name = PurePosixPath(normalized).name.strip()
+
     if not name or name in {".", ".."}:
         raise HTTPException(status_code=400, detail=f"非法文件名: {filename}")
     return name
