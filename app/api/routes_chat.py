@@ -1,22 +1,15 @@
 """纯 LLM 对话路由（无 RAG，对照组/闲聊用），支持多轮对话。"""
 
-import uuid
-
 from fastapi import APIRouter, Query
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.session_store import get_session_store
+from app.core.session_store import ensure_session_id, get_session_store
 from app.models.schemas import ChatRequest, ChatResponse
 from app.services.chat_service import answer_plain, build_history
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["对话"])
-
-
-def _ensure_session_id(session_id: str | None) -> str:
-    """如果前端没传 session_id，生成一个新的。"""
-    return session_id or uuid.uuid4().hex
 
 
 @router.get("/chat", response_model=ChatResponse, summary="纯对话（GET，便于浏览器测试）")
@@ -44,7 +37,7 @@ async def chat_post(body: ChatRequest) -> ChatResponse:
     """
     settings = get_settings()
     store = get_session_store()
-    session_id = _ensure_session_id(body.session_id)
+    session_id = ensure_session_id(body.session_id)
 
     # 取历史 → 转 LangChain 消息
     history = build_history(store.get_history(session_id))

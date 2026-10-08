@@ -19,6 +19,7 @@
 
 import threading
 import time
+import uuid
 from collections import OrderedDict
 
 from app.core.logging import get_logger
@@ -131,3 +132,13 @@ _session_store = SessionStore()
 
 def get_session_store() -> SessionStore:
     return _session_store
+
+
+def ensure_session_id(session_id: str | None) -> str:
+    """前端没传 session_id 时生成一个新的。
+
+    放在这里而不是各个路由里：三个路由（chat / qa / qa/stream）
+    都需要"没传就新建"这个逻辑，之前每个文件都抄了一份，
+    改动时容易漏改某一个。
+    """
+    return session_id or uuid.uuid4().hex

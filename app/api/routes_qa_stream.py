@@ -1,13 +1,12 @@
 """RAG 问答 - 流式响应（SSE），支持多轮对话。"""
 
 import json
-import uuid
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from app.core.logging import get_logger
-from app.core.session_store import get_session_store
+from app.core.session_store import ensure_session_id, get_session_store
 from app.models.schemas import QARequest
 from app.services.chat_service import build_history
 from app.services.qa_service import answer_question_stream
@@ -33,7 +32,7 @@ async def qa_stream(body: QARequest) -> StreamingResponse:
     - error:      错误
     """
     store = get_session_store()
-    session_id = body.session_id or uuid.uuid4().hex
+    session_id = ensure_session_id(body.session_id)
     history = build_history(store.get_history(session_id))
 
     async def event_generator():

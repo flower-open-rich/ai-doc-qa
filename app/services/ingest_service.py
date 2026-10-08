@@ -2,12 +2,16 @@
 离线建库脚本：把 data/raw_docs/ 下的资料灌进向量库。
 
 使用方式：
-    conda run -n nuc_qa python -m app.services.ingest_service
+    python -m app.services.ingest_service
+    （或者 make ingest）
 
 为什么需要单独的"建库"步骤？
 - 资料更新不需要每次启动服务都重灌
-- 灌库慢（要调用 Embedding API），一次性做完后服务直接查就行
+- 灌库慢（每段文字都要算一次向量），一次性做完后服务直接查就行
 - 数据持久化到磁盘，重启服务数据不丢
+
+注意：换过 Embedding 模型（EMBEDDING_PROVIDER / EMBEDDING_MODEL）
+必须重跑本脚本重建，否则新旧向量维度不一致，检索会报错。
 """
 
 import shutil
@@ -64,8 +68,8 @@ def ingest_documents(directory: str | None = None) -> int:
     # 2. 清空旧库（避免重复）
     clear_vectorstore()
 
-    # 3. 入库（这一步会调用 Embedding API，慢）
-    # 每个 chunk 调一次 API，5 个 chunk 大约 5-10 秒
+    # 3. 入库：这一步会逐段计算向量，是整个流程最慢的环节。
+    #    本地模型首次运行还需要下载权重（约 90MB），之后走缓存。
     added = add_documents_to_vectorstore(chunks)
 
     print("=" * 60)

@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [main, master, develop]
 
+# 同一分支连续推送时，取消上一次还没跑完的，省额度也更快看到结果
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
@@ -21,12 +26,15 @@ jobs:
           cache: "pip"
 
       - name: 📦 Install dependencies
+        # 关键优化：PyPI 上的 torch 默认捆绑一整套 CUDA 库（2GB+），
+        # 而 CI 跑在 CPU runner 上、测试又全部用 stub 替身，根本用不到 GPU 版本。
+        # 加一个 CPU 专用索引让它从那里取 torch（约 200MB）。
+        # 实测这一步原本占整个 job 的 70%（147s/210s）。
         run: |
           python -m pip install --upgrade pip
-          # 只装测试/lint 需要的部分，不装 torch（省 CI 时间和体积）。
-          # 测试全部用 stub 替身，不会真的加载 Embedding 模型。
-          pip install ruff mypy pytest pytest-asyncio pytest-cov
-          pip install -r requirements.txt
+          pip install \
+            --extra-index-url https://download.pytorch.org/whl/cpu \
+            -r requirements-dev.txt
 
       - name: ✨ Ruff (lint)
         run: ruff check .
@@ -35,11 +43,10 @@ jobs:
         run: ruff format --check .
 
       - name: 🔍 Mypy (type check)
-        # 之前这里写了 `|| true`，等于类型检查永远不报错、CI 永远是绿的，
-        # 那就失去了 CI 的意义。现在改成真的会失败。
-        # app/ 现有代码全部通过，新增代码请自行修好类型问题。
+        # 之前这里写过 `|| true`，等于类型检查永远不报错、CI 永远是绿的，
+        # 那就失去了 CI 的意义。现在是真的会失败。
         run: mypy app/
 
       - name: 🧪 Run tests
-        # 测试用 stub 替身，不需要真实 API Key / 余额，所以在 CI 里能真跑。
+        # 所有测试都用 stub 替身，不需要真实 API Key / 余额，所以能真跑。
         run: pytest tests/ -v --cov=app --cov-report=term-missing

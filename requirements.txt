@@ -1,45 +1,58 @@
 # ============================================================
-# 中北大学智能问答助手 - Python 依赖
+# 中北大学智能问答助手 - 运行依赖
 # 使用：pip install -r requirements.txt
+#
+# 这份清单只保留"代码里真的 import 了"的包，
+# 传递依赖交给 pip 解析，不重复声明。
 # ============================================================
 
 # ---------- Web 框架 ----------
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
+# FastAPI 解析 multipart/form-data（文件上传）必需，不要删
 python-multipart==0.0.20
 
-# ---------- LLM / RAG 核心 ----------
+# ---------- RAG 核心 ----------
+# langchain 是聚合包，装它会自动带上 core / text-splitters，
+# 但这里仍显式钉住版本，避免传递依赖升级导致行为漂移。
 langchain==0.3.14
 langchain-community==0.3.14
 langchain-core==0.3.29
 langchain-text-splitters==0.3.4
 
-# ---------- 本地 Embedding（默认方案：免费、离线） ----------
-# 注意：sentence-transformers 会拉入 torch，安装体积较大（Windows 约 2GB，
-# 因为默认带 CUDA 版依赖）。如果只想用云端 Embedding（EMBEDDING_PROVIDER=zhipu），
-# 可以把这两行去掉，镜像会小很多。
+# ---------- 向量化（默认走本地免费模型） ----------
+# sentence-transformers 必须显式声明：
+# langchain-huggingface 只把它放在 [full] extra 里，不装就用不了本地模型。
+# 注意它会拉入 torch，安装体积较大。若只想用云端 Embedding
+# （EMBEDDING_PROVIDER=zhipu），可以删掉这两行，镜像会小很多。
 sentence-transformers>=2.7,<4
 langchain-huggingface>=0.1,<0.4
 
-# ---------- 云端模型 SDK ----------
+# ---------- 云端模型 SDK（可切换的备选方案） ----------
 zhipuai==2.1.5.20250825
 openai==1.59.7
-# 与 langchain-core 0.3.x 兼容的版本区间
 langchain-openai>=0.2,<0.4
 
 # ---------- 向量数据库 ----------
 chromadb==0.5.23
 
-# ---------- 文档处理 ----------
+# ---------- 文档解析 ----------
+# PDF：PyPDFLoader 底层用 pypdf
 pypdf==5.1.0
-pdfplumber==0.11.4
-python-docx==1.1.2
+# Word：Docx2txtLoader 底层用 docx2txt
+# 它只依赖标准库 zipfile + ElementTree，不需要 python-docx
 docx2txt>=0.8
-beautifulsoup4==4.12.3
-markdown==3.7
 
-# ---------- 配置与工具 ----------
-python-dotenv==1.0.1
+# ---------- 配置 ----------
 pydantic==2.10.4
 pydantic-settings==2.7.0
-httpx==0.28.1
+
+# ============================================================
+# 已移除的依赖（经核实代码中无任何 import，且无其他包需要）：
+#   pdfplumber      —— 从最初脚手架就未使用，PDF 走 pypdf
+#   beautifulsoup4  —— 未使用
+#   markdown        —— 未使用（Markdown 清洗是自写正则，不依赖渲染库）
+#   python-dotenv   —— pydantic-settings 自带，会作为传递依赖装上
+#   python-docx     —— docx2txt 不需要它（实测屏蔽 docx 模块后仍能解析）
+#   httpx           —— 未直接使用，由 fastapi/langchain 作为传递依赖提供
+# ============================================================

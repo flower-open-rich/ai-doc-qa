@@ -124,7 +124,8 @@ def load_single_file(file_path: Path) -> list[Document]:
         return pdf_loader.load()
 
     if ext == ".docx":
-        # Word 文档用 docx2txt 抽纯文本（依赖 python-docx）
+        # Word 文档用 docx2txt 抽纯文本
+        # 注意：docx2txt 只依赖标准库（zipfile + ElementTree），不需要 python-docx
         from langchain_community.document_loaders import Docx2txtLoader
 
         docx_loader = Docx2txtLoader(str(file_path))

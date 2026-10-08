@@ -3,7 +3,26 @@
 import threading
 import time
 
-from app.core.session_store import SessionStore
+from app.core.session_store import SessionStore, ensure_session_id
+
+
+def test_ensure_session_id_generates_when_missing():
+    """没传 session_id 时应生成一个新的（32 位 hex）。"""
+    sid = ensure_session_id(None)
+    assert isinstance(sid, str)
+    assert len(sid) == 32
+    assert sid.isalnum()
+
+
+def test_ensure_session_id_keeps_existing():
+    """传了 session_id 时必须原样保留，否则多轮对话会断掉。"""
+    assert ensure_session_id("my-session") == "my-session"
+
+
+def test_ensure_session_id_is_unique():
+    """连续生成的 ID 不能重复。"""
+    ids = {ensure_session_id(None) for _ in range(200)}
+    assert len(ids) == 200
 
 
 def test_new_session_history_is_empty():

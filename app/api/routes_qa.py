@@ -1,21 +1,15 @@
 """RAG 智能问答路由（核心功能），支持多轮对话。"""
 
-import uuid
-
 from fastapi import APIRouter, Query
 
 from app.core.logging import get_logger
-from app.core.session_store import get_session_store
+from app.core.session_store import ensure_session_id, get_session_store
 from app.models.schemas import QARequest, QAResponse
 from app.services.chat_service import build_history
 from app.services.qa_service import answer_question
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["RAG 问答"])
-
-
-def _ensure_session_id(session_id: str | None) -> str:
-    return session_id or uuid.uuid4().hex
 
 
 @router.get("/qa", response_model=QAResponse, summary="RAG 问答（GET，便于测试）")
@@ -38,7 +32,7 @@ async def qa_post(body: QARequest) -> QAResponse:
     - 不传 session_id：开启新对话，返回新的 session_id
     """
     store = get_session_store()
-    session_id = _ensure_session_id(body.session_id)
+    session_id = ensure_session_id(body.session_id)
 
     # 取历史 → 转 LangChain 消息
     history = build_history(store.get_history(session_id))
